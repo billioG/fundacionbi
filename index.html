@@ -65,6 +65,7 @@
       .mini-bar{min-width:120px}
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
   <!-- LOGIN PAGE (Pantalla separada) -->
@@ -101,11 +102,12 @@
 
     <div class="wrap">
       <!-- Controles (selector de semana y admin-only) -->
-      <section class="card section">
+      <section id="controlsSection" class="card section">
         <div class="toolbar">
           <label class="muted">Semana:</label>
           <select id="selectSemana"></select>
           <button id="btn-refresh" class="btn secondary">Actualizar</button>
+          <button id="btn-pdf" class="btn">Descargar PDF</button>
 
           <!-- Solo Billy: subir CSV -->
           <div id="adminOnly" style="display:none; gap:.5rem; align-items:center; flex-wrap:wrap">
@@ -117,7 +119,7 @@
       </section>
 
       <!-- Tabla principal -->
-      <section class="card section">
+      <section id="tableCard" class="card section">
         <div style="overflow:auto">
           <table id="dataTable">
             <thead>
@@ -162,6 +164,9 @@
 
     const selectSemana = document.getElementById('selectSemana');
     const btnRefresh = document.getElementById('btn-refresh');
+    const btnPDF = document.getElementById('btn-pdf');
+    const controlsSection = document.getElementById('controlsSection');
+    const tableCard = document.getElementById('tableCard');
     const adminOnly = document.getElementById('adminOnly');
 
     const csvFile = document.getElementById('csvFile');
@@ -315,7 +320,53 @@
     modal.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
     document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && modal.style.display === 'flex') closeModal(); });
 
-    // ======= CSV UPLOAD (REEMPLAZO TOTAL DE LA SEMANA) — solo Billy =======
+    // ======= PDF EXPORT =======
+    btnPDF.addEventListener('click', async ()=>{
+      // Cerrar modal y preparar contenedor temporal que incluya HEADER + TABLA
+      closeModal();
+
+      const semana = selectSemana.value || currentMonday();
+      const pdfContainer = document.createElement('div');
+      pdfContainer.style.padding = '12px';
+      pdfContainer.style.background = '#ffffff';
+
+      // Clonar encabezado con logos (sin sticky ni sombra)
+      const headerEl = document.querySelector('header');
+      const headerClone = headerEl.cloneNode(true);
+      headerClone.style.position = 'static';
+      headerClone.style.boxShadow = 'none';
+      // Remover el botón de logout en el PDF para dejarlo limpio
+      const logoutBtnClone = headerClone.querySelector('#btn-logout');
+      if(logoutBtnClone) logoutBtnClone.remove();
+
+      // Meta (semana y fecha de generación)
+      const meta = document.createElement('div');
+      meta.style.margin = '8px 0 12px';
+      meta.innerHTML = `<strong>Semana:</strong> ${semana} &nbsp; · &nbsp; <small>Generado: ${new Date().toLocaleString()}</small>`;
+
+      // Clonar la tarjeta de la tabla
+      const tableClone = document.getElementById('tableCard').cloneNode(true);
+
+      pdfContainer.appendChild(headerClone);
+      pdfContainer.appendChild(meta);
+      pdfContainer.appendChild(tableClone);
+      document.body.appendChild(pdfContainer);
+
+      const opt = {
+        margin: 10,
+        filename: `reporte_${semana}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' }
+      };
+      try{
+        await html2pdf().set(opt).from(pdfContainer).save();
+      } finally {
+        pdfContainer.remove();
+      }
+    });
+
+    // ======= CSV UPLOAD (REEMPLAZO TOTAL DE LA SEMANA) — solo Billy ======= (REEMPLAZO TOTAL DE LA SEMANA) — solo Billy =======
     btnUpload.addEventListener('click', async()=>{
       const file = csvFile.files[0];
       if(!file){ alert('Selecciona un CSV primero.'); return; }
@@ -373,4 +424,3 @@
   </script>
 </body>
 </html>
-
