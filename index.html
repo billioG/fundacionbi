@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root{ --azul:#003865; --amarillo:#FFB61B; --celeste:#13bfd7; --bg:#f9f9f9; }
     *{box-sizing:border-box}
@@ -18,7 +19,7 @@
     .logo-box{height:40px;display:flex;align-items:center;justify-content:center}
     .logo-box img{max-height:32px;max-width:160px;width:auto;height:auto}
 
-    .wrap{padding:16px;max-width:1100px;margin:0 auto}
+    .wrap{padding:16px;max-width:1200px;margin:0 auto}
     .card{background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.08);overflow:hidden}
     .section{padding:1rem}
 
@@ -29,14 +30,12 @@
     .muted{opacity:.75}
 
     table{width:100%;border-collapse:collapse}
-    th,td{padding:.75rem;text-align:center;border-bottom:1px solid #eee}
+    th,td{padding:.75rem;text-align:center;border-bottom:1px solid #eee;vertical-align:middle}
     th{background:var(--azul);color:#fff}
     tr:nth-child(even){background:#f6f7f9}
-    /* Alinear primera columna (Centro) a la izquierda */
     #dataTable th:first-child, #dataTable td:first-child{ text-align:left }
 
-    /* Mini barras de avance */
-    .mini-bar{position:relative;height:18px;background:#e5e7eb;border-radius:9999px;overflow:hidden;min-width:140px}
+    .mini-bar{position:relative;height:18px;background:#e5e7eb;border-radius:9999px;overflow:hidden;min-width:160px}
     .mini-bar .fill{height:100%;width:0;transition:width 450ms ease}
     .mini-bar .label{position:absolute;left:8px;top:0;height:100%;font-size:.8rem;line-height:18px;font-weight:700;color:#111827}
     .fill.red{background:#dc2626}
@@ -44,19 +43,16 @@
     .fill.green{background:#22c55e}
     .fill.blue{background:var(--azul);color:#fff}
 
-    /* Auth page */
     #loginPage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
     .auth-card{max-width:420px;width:100%}
     .auth-grid{display:grid;grid-template-columns:1fr;gap:.6rem}
     .pill{display:inline-flex;align-items:center;gap:.5rem;background:#eef6ff;color:#0b4a8b;border-radius:999px;padding:.35rem .75rem;font-size:.9rem}
 
-    /* Modal */
     #modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);justify-content:center;align-items:center;z-index:9999}
     #modal-content{background:#fff;padding:1.25rem 1.5rem;border-radius:12px;max-width:560px;width:92%}
     #modal-content h2{margin:.25rem 0 1rem;color:var(--azul)}
     #modal-close{background:var(--amarillo);border:none;padding:.5rem .9rem;border-radius:8px;cursor:pointer;float:right}
 
-    /* Responsive */
     @media (max-width:640px){
       .brand h1{font-size:1rem}
       th,td{padding:.55rem;font-size:.95rem}
@@ -65,10 +61,8 @@
       .mini-bar{min-width:120px}
     }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-  <!-- LOGIN PAGE (Pantalla separada) -->
   <div id="loginPage">
     <div class="auth-card card section">
       <div style="text-align:center;margin-bottom:.5rem">
@@ -84,16 +78,14 @@
     </div>
   </div>
 
-  <!-- APP (solo visible tras login) -->
   <div id="app" style="display:none">
     <header>
       <div class="brand">
         <h1>Dashboard Centros Educativos BI</h1>
       </div>
       <div class="logos">
-        <!-- Logos fijos en assets/img -->
-        <div class="logo-box"><img src="assets/img/fundacion.png" alt="Fundación BI" /></div>
-        <div class="logo-box"><img src="assets/img/1bot.png" alt="1bot" /></div>
+        <div class="logo-box"><img src="assets/img/fundacion_bi.png" alt="Fundación BI" onerror="this.onerror=null; this.src='assets/img/fundacion bi.png';" /></div>
+        <div class="logo-box"><img src="assets/img/1bot.png" alt="1bot" onerror="this.onerror=null; this.src='assets/img/1bot logo.png';" /></div>
       </div>
       <div>
         <button id="btn-logout" class="btn secondary">Cerrar sesión</button>
@@ -101,7 +93,6 @@
     </header>
 
     <div class="wrap">
-      <!-- Controles (selector de semana y admin-only) -->
       <section id="controlsSection" class="card section">
         <div class="toolbar">
           <label class="muted">Semana:</label>
@@ -109,16 +100,18 @@
           <button id="btn-refresh" class="btn secondary">Actualizar</button>
           <button id="btn-pdf" class="btn">Descargar PDF</button>
 
-          <!-- Solo Billy: subir CSV -->
           <div id="adminOnly" style="display:none; gap:.5rem; align-items:center; flex-wrap:wrap">
             <span class="muted" style="margin-left:.5rem">| Admin</span>
-            <input type="file" id="csvFile" accept=".csv" />
-            <button id="btn-upload" class="btn">Subir Datos</button>
+            <input type="file" id="csvReporte" accept=".csv" />
+            <button id="btn-upload-reporte" class="btn">Subir Reporte Semanal (reemplazar)</button>
+            <input type="file" id="csvKolibri" accept=".csv" />
+            <button id="btn-upload-kolibri" class="btn">Cargar Kolibri EF‑BI (calcular %)</button>
+            <input type="file" id="csvCentros" accept=".csv" />
+            <button id="btn-upload-centros" class="btn">Cargar Meta Centros (upsert)</button>
           </div>
         </div>
       </section>
 
-      <!-- Tabla principal -->
       <section id="tableCard" class="card section">
         <div style="overflow:auto">
           <table id="dataTable">
@@ -138,7 +131,6 @@
     </div>
   </div>
 
-  <!-- MODAL DETALLES -->
   <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div id="modal-content">
       <button id="modal-close" type="button">Cerrar</button>
@@ -148,53 +140,53 @@
   </div>
 
   <script>
-    // ======= SUPABASE INIT =======
-    const projectUrl = 'https://cbvyfwdtmrvyddiledhj.supabase.co';
-    const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNidnlmd2R0bXJ2eWRkaWxlZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4Mjk3NTQsImV4cCI6MjA3MjQwNTc1NH0.Au1T_15oXYDYM3R5HAjMOhCsjul9sBwZ_zd4O5YQBPY';
-    const sb = supabase.createClient(projectUrl, anonKey);
+    // ===== Config =====
+    var projectUrl = 'https://cbvyfwdtmrvyddiledhj.supabase.co';
+    var anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNidnlmd2R0bXJ2eWRkaWxlZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4Mjk3NTQsImV4cCI6MjA3MjQwNTc1NH0.Au1T_15oXYDYM3R5HAjMOhCsjul9sBwZ_zd4O5YQBPY';
+    var sb = supabase.createClient(projectUrl, anonKey);
 
-    // ======= UI refs =======
-    const loginPage = document.getElementById('loginPage');
-    const app = document.getElementById('app');
-    const emailEl = document.getElementById('email');
-    const passEl = document.getElementById('password');
-    const btnLogin = document.getElementById('btn-login');
-    const btnLogout = document.getElementById('btn-logout');
-    const authMsg = document.getElementById('auth-msg');
+    // ===== UI refs =====
+    var loginPage = document.getElementById('loginPage');
+    var app = document.getElementById('app');
+    var emailEl = document.getElementById('email');
+    var passEl = document.getElementById('password');
+    var btnLogin = document.getElementById('btn-login');
+    var btnLogout = document.getElementById('btn-logout');
+    var authMsg = document.getElementById('auth-msg');
 
-    const selectSemana = document.getElementById('selectSemana');
-    const btnRefresh = document.getElementById('btn-refresh');
-    const btnPDF = document.getElementById('btn-pdf');
-    const controlsSection = document.getElementById('controlsSection');
-    const tableCard = document.getElementById('tableCard');
-    const adminOnly = document.getElementById('adminOnly');
+    var selectSemana = document.getElementById('selectSemana');
+    var btnRefresh = document.getElementById('btn-refresh');
+    var btnPDF = document.getElementById('btn-pdf');
+    var adminOnly = document.getElementById('adminOnly');
 
-    const csvFile = document.getElementById('csvFile');
-    const btnUpload = document.getElementById('btn-upload');
+    var csvReporte = document.getElementById('csvReporte');
+    var btnUploadReporte = document.getElementById('btn-upload-reporte');
+    var csvKolibri = document.getElementById('csvKolibri');
+    var btnUploadKolibri = document.getElementById('btn-upload-kolibri');
+    var csvCentros = document.getElementById('csvCentros');
+    var btnUploadCentros = document.getElementById('btn-upload-centros');
 
-    const tbody = document.querySelector('#dataTable tbody');
+    var tbody = document.querySelector('#dataTable tbody');
+    var modal = document.getElementById('modal');
+    var modalBody = document.getElementById('modal-body');
+    var btnClose = document.getElementById('modal-close');
 
-    const modal = document.getElementById('modal');
-    const modalBody = document.getElementById('modal-body');
-    const btnClose = document.getElementById('modal-close');
-
-    // ======= AUTH =======
+    // ===== Auth =====
     async function checkSession(){
-      const { data: { session } } = await sb.auth.getSession();
+      var out = await sb.auth.getSession();
+      var session = out && out.data ? out.data.session : null;
       if(session){ onSignedIn(session); } else { onSignedOut(); }
     }
 
     function onSignedIn(session){
       loginPage.style.display = 'none';
       app.style.display = 'block';
-
-      const email = session.user?.email || '';
+      var email = session.user && session.user.email ? session.user.email : '';
       if(email.toLowerCase() === 'billy@1bot.org'){
         adminOnly.style.display = 'flex';
       } else {
         adminOnly.style.display = 'none';
       }
-
       loadSemanasAndData();
     }
 
@@ -205,217 +197,423 @@
       tbody.innerHTML = '';
     }
 
-    btnLogin.addEventListener('click', async()=>{
+    btnLogin.addEventListener('click', async function(){
       authMsg.textContent = 'Ingresando…';
-      const { data, error } = await sb.auth.signInWithPassword({
-        email: emailEl.value.trim(),
+      var res = await sb.auth.signInWithPassword({
+        email: (emailEl.value || '').trim(),
         password: passEl.value
       });
-      if(error){ authMsg.textContent = 'Error: ' + error.message; return; }
-      onSignedIn({ user: data.user });
+      if(res.error){ authMsg.textContent = 'Error: ' + res.error.message; return; }
+      onSignedIn({ user: res.data.user });
     });
 
-    btnLogout.addEventListener('click', async()=>{
+    btnLogout.addEventListener('click', async function(){
       await sb.auth.signOut();
       onSignedOut();
     });
 
-    sb.auth.onAuthStateChange((_e, session)=>{
+    sb.auth.onAuthStateChange(function(_e, session){
       if(session) onSignedIn(session); else onSignedOut();
     });
 
-    // ======= SEMANAS + DATA =======
+    // ===== Semanas + datos =====
     async function loadSemanasAndData(){
-      const { data: semanas } = await sb
+      var out = await sb
         .from('reportes_semanales')
         .select('semana')
         .not('semana','is',null)
         .order('semana', { ascending:false });
-      const uniques = [...new Set((semanas||[]).map(s=>s.semana))];
+      var semanas = out && out.data ? out.data : [];
+      var uniques = Array.from(new Set(semanas.map(function(s){ return s.semana; })));
       if(uniques.length===0){ uniques.push(currentMonday()); }
       selectSemana.innerHTML = '';
-      uniques.forEach(s=>{ const opt=document.createElement('option'); opt.value=s; opt.textContent=s; selectSemana.appendChild(opt); });
+      uniques.forEach(function(s){ var opt=document.createElement('option'); opt.value=s; opt.textContent=s; selectSemana.appendChild(opt); });
       await loadDataForWeek(selectSemana.value);
     }
 
-    selectSemana.addEventListener('change', ()=> loadDataForWeek(selectSemana.value));
-    btnRefresh.addEventListener('click', ()=> loadDataForWeek(selectSemana.value));
+    selectSemana.addEventListener('change', function(){ loadDataForWeek(selectSemana.value); });
+    btnRefresh.addEventListener('click', function(){ loadDataForWeek(selectSemana.value); });
 
     async function loadDataForWeek(semana){
-      const { data, error } = await sb
-        .from('reportes_semanales')
-        .select('*')
-        .eq('semana', semana);
-      if(error){ console.error(error); return; }
-      // 3) Ordenar por % (desc) y dejar encargados de 1bot al final
-      const enriched = (data||[]).map(r=>({
-        ...r,
-        pct: r.avance==null ? 0 : Math.round((r.avance/13)*100),
-        is1bot: (r.encargado||'').toLowerCase().includes('1bot')
-      }));
-      const normal = enriched.filter(x=>!x.is1bot).sort((a,b)=> b.pct - a.pct);
-      const onebot = enriched.filter(x=>x.is1bot).sort((a,b)=> b.pct - a.pct);
-      render([...normal, ...onebot]);
+      var rows=[]; var viewOk=false;
+      try{
+        var q1 = await sb
+          .from('vw_avance_centro_semana')
+          .select('*')
+          .eq('semana', semana);
+        if(!q1.error && q1.data){
+          rows = q1.data.map(function(r){ return {
+            centro: r.centro,
+            encargado: r.encargado,
+            telefono: r.telefono,
+            carta: r.carta,
+            pct: Math.round(r.avance_total_pct || 0),
+            cantidad: r.cantidad,
+            niveles: r.niveles,
+            usuarios: r.usuarios,
+            notas: r.notas,
+            horarios: r.horarios,
+            ada: r.ada,
+            copa: r.copa,
+            estatus: r.estatus,
+            semana: r.semana,
+            is1bot: (r.encargado||'').toLowerCase().indexOf('1bot')>-1
+          }; });
+          viewOk = true;
+        }
+      }catch(e){ viewOk=false; }
+
+      if(!viewOk || rows.length===0){
+        var q2 = await sb
+          .from('reportes_semanales')
+          .select('*')
+          .eq('semana', semana);
+        if(!q2.error && q2.data){
+          rows = q2.data.map(function(r){ return {
+            centro: r.centro,
+            encargado: r.encargado,
+            telefono: r.telefono,
+            carta: r.carta,
+            pct: Math.round(((r.avance||0)/13)*100),
+            cantidad: r.cantidad,
+            niveles: r.niveles,
+            usuarios: r.usuarios,
+            notas: r.notas,
+            horarios: r.horarios,
+            ada: r.ada,
+            copa: r.copa,
+            estatus: r.estatus,
+            semana: r.semana,
+            is1bot: (r.encargado||'').toLowerCase().indexOf('1bot')>-1
+          }; });
+        }
+      }
+
+      try{
+        var ef = await sb.from('efbi_avance').select('centro,pct').eq('semana', semana);
+        var map = {};
+        (ef.data||[]).forEach(function(x){ map[x.centro] = Math.round(x.pct || 0); });
+        rows = rows.map(function(r){ return (map[r.centro]!=null) ? Object.assign({}, r, { pct: map[r.centro] }) : r; });
+      }catch(e){}
+
+      var normal = rows.filter(function(x){ return !x.is1bot; }).sort(function(a,b){ return b.pct - a.pct; });
+      var onebot = rows.filter(function(x){ return x.is1bot; }).sort(function(a,b){ return b.pct - a.pct; });
+      render(normal.concat(onebot));
     }
 
-    // ======= RENDER =======
     function render(rows){
       tbody.innerHTML='';
-      rows.forEach(row=>{
-        const tr=document.createElement('tr');
+      rows.forEach(function(row){
+        var tr=document.createElement('tr');
         tr.style.cursor='pointer';
-        tr.addEventListener('click', ()=> showDetails(row));
+        tr.addEventListener('click', function(){ showDetails(row); });
         addTd(tr,row.centro);
         addTd(tr,row.encargado);
         addTd(tr,row.telefono);
         addTd(tr,row.carta? '✅':'❌');
-        tr.appendChild(buildAvanceCell(row.pct ?? (row.avance==null?0:Math.round((row.avance/13)*100))));
+        tr.appendChild(buildAvanceCell(row.pct || 0));
         tbody.appendChild(tr);
       });
     }
-    function addTd(tr, text){ const td=document.createElement('td'); td.textContent=text??''; tr.appendChild(td); }
+    function addTd(tr, text){ var td=document.createElement('td'); td.textContent=(text!=null? text: ''); tr.appendChild(td); }
 
     function buildAvanceCell(pct){
-      const td=document.createElement('td');
-      const bar=document.createElement('div'); bar.className='mini-bar';
-      const fill=document.createElement('div'); fill.className='fill';
-      const label=document.createElement('div'); label.className='label'; label.textContent = `${pct}%`;
+      var td=document.createElement('td');
+      var bar=document.createElement('div'); bar.className='mini-bar';
+      var fill=document.createElement('div'); fill.className='fill';
+      var label=document.createElement('div'); label.className='label'; label.textContent = (pct||0) + '%';
       if(pct>=100){ fill.classList.add('blue'); label.style.color='#fff'; }
       else if(pct>=51){ fill.classList.add('green'); }
       else if(pct>=26){ fill.classList.add('orange'); }
       else { fill.classList.add('red'); }
-      fill.style.width = pct + '%';
+      fill.style.width = Math.max(0, Math.min(100, pct||0)) + '%';
       bar.appendChild(fill); bar.appendChild(label); td.appendChild(bar);
       return td;
     }
 
-    // ======= MODAL DETALLES =======
     function openModal(){ modal.style.display = 'flex'; }
     function closeModal(){ modal.style.display = 'none'; }
 
     function showDetails(r){
       openModal();
-      const pct = r.pct ?? (r.avance==null? 0 : Math.round((r.avance/13)*100));
-      modalBody.innerHTML = `
-        <p><strong>Centro:</strong> ${r.centro||''}</p>
-        <p><strong>Cantidad:</strong> ${r.cantidad??''}</p>
-        <p><strong>Niveles:</strong> ${r.niveles||''}</p>
-        <p><strong>Encargado:</strong> ${r.encargado||''}</p>
-        <p><strong>Contacto:</strong> ${r.telefono||''}</p>
-        <p><strong>Carta:</strong> ${r.carta? 'TRUE':'FALSE'}</p>
-        <p><strong>Listados:</strong> ${r.listados? 'TRUE':'FALSE'}</p>
-        <p><strong>Estatus:</strong> ${r.estatus||''}</p>
-        <p><strong>Usuarios:</strong> ${r.usuarios? 'TRUE':'FALSE'}</p>
-        <p><strong>Notas:</strong> ${r.notas? 'TRUE':'FALSE'}</p>
-        <p><strong>Horarios:</strong> ${r.horarios? 'TRUE':'FALSE'}</p>
-        <p><strong>ADA:</strong> ${r.ada? 'TRUE':'FALSE'}</p>
-        <p><strong>Avance:</strong> ${pct}% (${r.avance??0}/13)</p>
-        <p><strong>Copa STEEAM:</strong> ${r.copa||''}</p>
-        <p><strong>Semana:</strong> ${r.semana||''}</p>
-      `;
+      var pct = r.pct || 0;
+      var html = '' +
+        '<p><strong>Centro:</strong> ' + (r.centro||'') + '</p>' +
+        '<p><strong>Cantidad:</strong> ' + (r.cantidad==null? '': r.cantidad) + '</p>' +
+        '<p><strong>Niveles:</strong> ' + (r.niveles||'') + '</p>' +
+        '<p><strong>Encargado:</strong> ' + (r.encargado||'') + '</p>' +
+        '<p><strong>Contacto:</strong> ' + (r.telefono||'') + '</p>' +
+        '<p><strong>Carta:</strong> ' + (r.carta? 'TRUE':'FALSE') + '</p>' +
+        '<p><strong>Estatus:</strong> ' + (r.estatus||'') + '</p>' +
+        '<p><strong>Usuarios:</strong> ' + (r.usuarios? 'TRUE':'FALSE') + '</p>' +
+        '<p><strong>Notas:</strong> ' + (r.notas? 'TRUE':'FALSE') + '</p>' +
+        '<p><strong>Horarios:</strong> ' + (r.horarios? 'TRUE':'FALSE') + '</p>' +
+        '<p><strong>ADA:</strong> ' + (r.ada? 'TRUE':'FALSE') + '</p>' +
+        '<p><strong>Copa STEEAM:</strong> ' + (r.copa||'') + '</p>' +
+        '<p><strong>Avance:</strong> ' + pct + '%</p>' +
+        '<p><strong>Semana:</strong> ' + (r.semana||'') + '</p>';
+      modalBody.innerHTML = html;
     }
 
-    // Cierre robusto del modal
     btnClose.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
-    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && modal.style.display === 'flex') closeModal(); });
+    modal.addEventListener('click', function(e){ if(e.target === modal) closeModal(); });
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.style.display === 'flex') closeModal(); });
 
-    // ======= PDF EXPORT =======
-    btnPDF.addEventListener('click', async ()=>{
-      // Cerrar modal y preparar contenedor temporal que incluya HEADER + TABLA
+    // ===== Exportar PDF =====
+    btnPDF.addEventListener('click', async function(){
+      if (typeof html2pdf === 'undefined') { alert('No se pudo cargar la librería de exportación (html2pdf).'); return; }
       closeModal();
-
-      const semana = selectSemana.value || currentMonday();
-      const pdfContainer = document.createElement('div');
+      var semana = selectSemana.value || currentMonday();
+      var pdfContainer = document.createElement('div');
       pdfContainer.style.padding = '12px';
       pdfContainer.style.background = '#ffffff';
 
-      // Clonar encabezado con logos (sin sticky ni sombra)
-      const headerEl = document.querySelector('header');
-      const headerClone = headerEl.cloneNode(true);
+      var headerEl = document.querySelector('header');
+      var headerClone = headerEl.cloneNode(true);
       headerClone.style.position = 'static';
       headerClone.style.boxShadow = 'none';
-      // Remover el botón de logout en el PDF para dejarlo limpio
-      const logoutBtnClone = headerClone.querySelector('#btn-logout');
-      if(logoutBtnClone) logoutBtnClone.remove();
+      var logoutBtnClone = headerClone.querySelector('#btn-logout');
+      if (logoutBtnClone && logoutBtnClone.parentElement) { logoutBtnClone.parentElement.removeChild(logoutBtnClone); }
 
-      // Meta (semana y fecha de generación)
-      const meta = document.createElement('div');
+      var meta = document.createElement('div');
       meta.style.margin = '8px 0 12px';
-      meta.innerHTML = `<strong>Semana:</strong> ${semana} &nbsp; · &nbsp; <small>Generado: ${new Date().toLocaleString()}</small>`;
+      meta.innerHTML = '<strong>Semana:</strong> ' + semana + ' &nbsp; · &nbsp; <small>Generado: ' + new Date().toLocaleString() + '</small>';
 
-      // Clonar la tarjeta de la tabla
-      const tableClone = document.getElementById('tableCard').cloneNode(true);
-
+      var tableClone = document.getElementById('tableCard').cloneNode(true);
       pdfContainer.appendChild(headerClone);
       pdfContainer.appendChild(meta);
       pdfContainer.appendChild(tableClone);
       document.body.appendChild(pdfContainer);
 
-      const opt = {
-        margin: 10,
-        filename: `reporte_${semana}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' }
-      };
-      try{
-        await html2pdf().set(opt).from(pdfContainer).save();
-      } finally {
-        pdfContainer.remove();
-      }
+      var opt = { margin: 10, filename: 'reporte_' + semana + '.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' } };
+      try{ await html2pdf().set(opt).from(pdfContainer).save(); } finally { pdfContainer.remove(); }
     });
 
-    // ======= CSV UPLOAD (REEMPLAZO TOTAL DE LA SEMANA) — solo Billy ======= (REEMPLAZO TOTAL DE LA SEMANA) — solo Billy =======
-    btnUpload.addEventListener('click', async()=>{
-      const file = csvFile.files[0];
-      if(!file){ alert('Selecciona un CSV primero.'); return; }
-      const text = await file.text();
-      const rows = parseCSV(text);
-      const semana = selectSemana.value || currentMonday();
-      const payload = rows.map(r=>({
-        centro: r[0]?.trim(), cantidad: toInt(r[1]), niveles: r[2]?.trim(), encargado: r[3]?.trim(), telefono: r[4]?.trim(),
-        carta: toBool(r[5]), listados: toBool(r[6]), estatus: r[7]?.trim(), usuarios: toBool(r[8]), notas: toBool(r[9]),
-        horarios: toBool(r[10]), ada: toBool(r[11]), avance: toInt(r[12]), copa: r[13]?.trim(), semana
-      })).filter(x=>x.centro);
+    // ===== Uploads =====
+    btnUploadReporte.addEventListener('click', async function(){
+      var file = csvReporte.files[0]; if(!file){ alert('Selecciona el CSV de reporte semanal.'); return; }
+      var semana = selectSemana.value || currentMonday();
+      var text = await file.text();
+      var rows = parseCSV(text);
 
-      // 4) Reemplazar por completo la semana seleccionada
-      const { error: delErr } = await sb.from('reportes_semanales').delete().eq('semana', semana);
-      if(delErr){ alert('No se pudo limpiar la semana antes de cargar. Revisa la policy de DELETE en Supabase.\n'+delErr.message); return; }
+      var idx = buildHeaderIndex(text, {
+        centro: 'centro', cantidad: 'cantidad', niveles: 'niveles', encargado: 'encargado',
+        telefono: 'telefono', contacto: 'contacto', carta: 'carta', listados: 'listados', estatus: 'estatus',
+        usuarios: 'usuarios', notas: 'notas', horarios: 'horarios', ada: 'ada', avance: 'avance', copa: 'copa'
+      });
 
-      const { error: insErr } = await sb.from('reportes_semanales').insert(payload);
-      if(insErr){ alert('Error al insertar nuevos datos: '+insErr.message); return; }
+      var payload = rows.map(function(r){
+        var tel = (idx.telefono>=0? r[idx.telefono]: (idx.contacto>=0? r[idx.contacto]: ''));
+        return {
+          centro: pick(r, idx.centro),
+          cantidad: toInt(pick(r, idx.cantidad)),
+          niveles: pick(r, idx.niveles),
+          encargado: pick(r, idx.encargado),
+          telefono: tel ? String(tel).trim() : null,
+          carta: toBool(pick(r, idx.carta)),
+          listados: toBool(pick(r, idx.listados)),
+          estatus: pick(r, idx.estatus),
+          usuarios: toBool(pick(r, idx.usuarios)),
+          notas: toBool(pick(r, idx.notas)),
+          horarios: toBool(pick(r, idx.horarios)),
+          ada: toBool(pick(r, idx.ada)),
+          avance: toInt(pick(r, idx.avance)),
+          copa: pick(r, idx.copa),
+          semana: semana
+        };
+      }).filter(function(x){ return x.centro; });
 
+      var del = await sb.from('reportes_semanales').delete().eq('semana', semana);
+      if(del.error){ alert('No se pudo limpiar la semana antes de cargar. Verifica la policy de DELETE.\n' + del.error.message); return; }
+      var ins = await sb.from('reportes_semanales').insert(payload);
+      if(ins.error){ alert('Error al insertar nuevos datos: ' + ins.error.message); return; }
       await loadDataForWeek(semana);
-      alert('Datos reemplazados correctamente para la semana '+semana+'.');
+      alert('Reporte semanal reemplazado correctamente para la semana ' + semana + '.');
     });
 
-    // ======= Utilidades =======
+    // ===== Kolibri EF-BI (con soporte por ID de canal) =====
+    btnUploadKolibri.addEventListener('click', async function(){
+      var file = csvKolibri.files[0]; if(!file) { alert('Selecciona CSV de Kolibri (registros resumidos)'); return; }
+      var semana = selectSemana.value || currentMonday();
+      var text = await file.text();
+
+      var idx = buildHeaderIndex(text, {
+        canal: 'nombre del canal',
+        usuario: 'nombre de usuario',
+        recurso: 'título del recurso',
+        progreso: 'progreso (0-1)',
+        canal_id: 'id del canal'
+      });
+      if(idx.canal_id < 0){
+        var alt = buildHeaderIndex(text, { canal_id_alt: 'channel id' });
+        idx.canal_id = alt.canal_id_alt;
+      }
+      if(idx.canal<0 || idx.usuario<0 || (idx.progreso<0 && idx.recurso<0)){
+        alert('Encabezados no encontrados. Requiere: Nombre del canal, Nombre de usuario, Título del recurso, Progreso (0-1).');
+        return;
+      }
+
+      var lines = parseCSV(text);
+      var seen = new Set();
+      var perUC = new Map();
+
+      var CHANNEL_IDS = new Set(['4a92b47b0f884c7aa2ef089aca27ad99','5fbf55d9502149f6a0c4f0eccbd98dcc','f3b00b6398740178d92e23db21e7756','8f3b00b6398740178d92e23db21e7756']);
+      var CHANNEL_PREFIXES = ['educacion financiera bi', 'aulas tecnicas y tecnologicas'];
+
+      lines.forEach(function(r){
+        var canalNameRaw = (r[idx.canal]||'');
+        var canalName = normalizeEs(canalNameRaw);
+        var canalId = (idx.canal_id>=0? String(r[idx.canal_id]||'').trim() : '');
+        var allowed = false;
+        if(canalId && CHANNEL_IDS.has(canalId)) allowed = true;
+        if(!allowed){ for(var i=0;i<CHANNEL_PREFIXES.length;i++){ if(canalName.indexOf(CHANNEL_PREFIXES[i])===0){ allowed = true; break; } } }
+        if(!allowed) return;
+
+        var usuario = (r[idx.usuario]||'').trim();
+        var recurso = (idx.recurso>=0? (r[idx.recurso]||'').trim(): '');
+        var progreso = parseFloat(String(idx.progreso>=0? r[idx.progreso]||'0' : '0').replace(',', '.')) || 0;
+        if(progreso < 1) return;
+
+        var k = usuario + '||' + (canalId||canalNameRaw) + '||' + recurso;
+        if(seen.has(k)) return; seen.add(k);
+
+        var uc = usuario + '||' + (canalId||canalNameRaw);
+        var cur = perUC.get(uc)||0; if(cur<6) perUC.set(uc, cur+1);
+      });
+
+      var perUser = new Map();
+      perUC.forEach(function(cnt, uc){ var user = uc.split('||')[0]; var cur = perUser.get(user)||0; perUser.set(user, Math.min(6, cur + cnt)); });
+
+      var centrosMap = await getCentrosMap();
+      var keys = Object.keys(centrosMap).sort(function(a,b){ return b.length - a.length; });
+
+      var perPrefix = new Map();
+      var unknown = new Map();
+      perUser.forEach(function(cnt, user){
+        var pref = userPrefix(user, keys);
+        if(!pref){ var head = user.split(/[@_.-]/)[0] || user; unknown.set(head, (unknown.get(head)||0) + cnt); return; }
+        perPrefix.set(pref, (perPrefix.get(pref)||0) + cnt);
+      });
+
+      var payload=[];
+      keys.forEach(function(pref){
+        var meta = centrosMap[pref];
+        var done = perPrefix.get(pref)||0;
+        var denom = (meta.cantidad||0)*6;
+        var pct = denom>0 ? Math.round(100*done/denom) : 0;
+        payload.push({ centro: meta.centro, semana: semana, pct: pct });
+      });
+
+      try{ await sb.from('efbi_avance').delete().eq('semana', semana); }catch(e){}
+      var res = await sb.from('efbi_avance').upsert(payload, { onConflict: 'centro,semana' });
+      if(res.error){ alert('Error guardando efbi_avance: ' + res.error.message); return; }
+
+      if(unknown.size>0){ var sample=[]; unknown.forEach(function(v,k){ if(sample.length<6) sample.push(k+':'+v); }); alert('Usuarios sin prefijo reconocido (ejemplos): ' + sample.join(', ') + '\nAgrega su Prefijo en centros_meta o ajusta la convención de usuarios.'); }
+
+      alert('Porcentajes calculados y guardados.');
+      await loadDataForWeek(semana);
+    });
+
+    // ===== Meta Centros =====
+    btnUploadCentros.addEventListener('click', async function(){
+      var file = csvCentros.files[0]; if(!file) { alert('Selecciona CSV de Meta Centros'); return; }
+      var text = await file.text();
+      var rows = parseCSV(text);
+      var idx = buildHeaderIndex(text, {
+        centro:'centro', cantidad:'cantidad', niveles:'niveles', encargado:'encargado', telefono:'telefono', contacto:'contacto', carta:'carta', listados:'listados', estatus:'estatus', usuarios:'usuarios', notas:'notas', horarios:'horarios', ada:'ada', copa:'copa', prefijo:'prefijo'
+      });
+      var payload = rows.map(function(r){
+        var tel = (idx.telefono>=0? r[idx.telefono]: (idx.contacto>=0? r[idx.contacto]: ''));
+        return {
+          centro: pick(r, idx.centro),
+          cantidad: toInt(pick(r, idx.cantidad)),
+          niveles: pick(r, idx.niveles),
+          encargado: pick(r, idx.encargado),
+          telefono: tel ? String(tel).trim() : null,
+          carta: toBool(pick(r, idx.carta)),
+          listados: toBool(pick(r, idx.listados)),
+          estatus: pick(r, idx.estatus),
+          usuarios: toBool(pick(r, idx.usuarios)),
+          notas: toBool(pick(r, idx.notas)),
+          horarios: toBool(pick(r, idx.horarios)),
+          ada: toBool(pick(r, idx.ada)),
+          copa: pick(r, idx.copa),
+          prefijo: (pick(r, idx.prefijo) || '').toLowerCase() || null
+        };
+      }).filter(function(x){ return x.centro; });
+      var r = await sb.from('centros_meta').upsert(payload, { onConflict: 'centro' });
+      if(r.error){ alert('Error al actualizar centros_meta: ' + r.error.message); return; }
+      alert('Metadatos de centros actualizados.');
+    });
+
+    // ===== Utilidades =====
     function parseCSV(text){
-      const lines = text.split(/\r?\n/).filter(l=>l.trim().length>0);
+      var lines = text.split(/\r?\n/).filter(function(l){ return l.trim().length>0; });
       if(lines.length===0) return [];
-      const maybeHeader = lines[0].toLowerCase();
-      const startIdx = (maybeHeader.includes('centro') && maybeHeader.includes('cantidad')) ? 1 : 0;
-      return lines.slice(startIdx).map(l=> safeSplit(l));
+      var startIdx = 1; // asumimos encabezado en la primera línea
+      return lines.slice(startIdx).map(function(l){ return safeSplit(l); });
     }
+
     function safeSplit(line){
-      const out=[]; let cur=''; let q=false;
-      for(let i=0;i<line.length;i++){
-        const ch=line[i];
+      var out=[]; var cur=''; var q=false;
+      for(var i=0;i<line.length;i++){
+        var ch=line[i];
         if(ch==='"'){ q=!q; continue; }
         if(ch===',' && !q){ out.push(cur); cur=''; continue; }
         cur+=ch;
       }
       out.push(cur); return out;
     }
-    const toBool = (v)=> String(v).trim().toLowerCase()==='true' || String(v).trim().toLowerCase()==='sí' || String(v).trim().toLowerCase()==='si' || v==='1';
-    const toInt = (v)=>{ const n=parseInt(String(v).replace(/[^0-9-]/g,''),10); return isNaN(n)? null : n; }
+
+    function pick(row, idx){ return (idx>=0? (row[idx]||'').trim() : null); }
+
+    function buildHeaderIndex(text, wanted){
+      var firstLine = (text.split(/\r?\n/)[0]||'').replace(/^\ufeff/, '');
+      var cols = safeSplit(firstLine).map(function(s){ return s.replace(/\\"/g,'').replace(/"/g,'').trim().toLowerCase(); });
+      var idx = {}; for(var key in wanted){ if(Object.prototype.hasOwnProperty.call(wanted,key)){ idx[key] = cols.indexOf(wanted[key]); } }
+      return idx;
+    }
+
+    function normalizeEs(s){
+      return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    }
+
+    function userPrefix(u, knownKeys){
+      if(!u) return '';
+      var base = String(u);
+      var at = base.indexOf('@'); if(at>0) base = base.substring(0,at);
+      base = base.trim().toLowerCase();
+      var m = /^([a-z0-9]+)[_.-]/.exec(base);
+      if(m) return m[1];
+      for(var i=0;i<knownKeys.length;i++){ if(base.indexOf(knownKeys[i])===0) return knownKeys[i]; }
+      return '';
+    }
+
+    // Conversores usados por las cargas CSV
+    function toBool(v){
+      var s = String(v||'').trim().toLowerCase();
+      return s==='true' || s==='sí' || s==='si' || s==='1' || s==='x' || s==='yes';
+    }
+    function toInt(v){
+      var n = parseInt(String(v||'').replace(/[^0-9-]/g,''),10);
+      return isNaN(n)? null : n;
+    }
+
+    async function getCentrosMap(){
+      var fallback = {
+        cg:{ centro:'Casa Guatemala BI', cantidad:73 }, p:{ centro:'Pantaleón', cantidad:415 }, ppb:{ centro:'Puente Belice', cantidad:46 }, ej:{ centro:'Esperanza Juvenil', cantidad:160 }, sjt:{ centro:'San Judas Tadeo', cantidad:256 }, cdf:{ centro:'Esperanza Project - Colegio del Futuro', cantidad:66 }, vdl:{ centro:'Villa de los niños', cantidad:93 }, fa:{ centro:'Fundación Adentro Escuela Nohemi Morales de Arjona', cantidad:163 }, cdl:{ centro:'Comunidades de la Tierra, ONG', cantidad:189 }, ids:{ centro:'INED Nocturno "Doctora Sara Cabarrus de Ruiz"', cantidad:93 }, etm:{ centro:'Escuela Taller Municipal', cantidad:32 }, cma:{ centro:'Colegio Mano Amiga', cantidad:135 }, epn:{ centro:'Centro educativo El Porvenir', cantidad:120 }, nfn:{ centro:'Centro educativo Nuevo Futuro', cantidad:120 }, iae:{ centro:'INEB Colonia La Cruz, Aldea El Conacastón', cantidad:203 }, ism:{ centro:'INEB Telesecundaria Aldea San Miguel Conacaste', cantidad:85 }, ias:{ centro:'INEB Telesecundaria San Juan Las Flores', cantidad:70 }, iec:{ centro:'INEB Ernesto Chavarría', cantidad:508 }, ich:{ centro:'INEB Telesecundaria Aldea El Chile', cantidad:37 }, cdz:{ centro:'INEB de Telesecundaria Comunidad de Zet', cantidad:180 }, cv:{ centro:'INEB de Telesecundaria Caserío Cruz Verde', cantidad:71 }, jdl:{ centro:'EORM Joya de las Flores', cantidad:219 }, ipc:{ centro:'Instituto Básico por Cooperativa de Sajcavillá', cantidad:264 }, tac:{ centro:'INEB Telesecundaria Caserío Asunción Chivoc', cantidad:161 }, icd:{ centro:'IEBC Comunidad de Ruíz', cantidad:229 }, is:{ centro:'INEB Suacité', cantidad:294 }, ide:{ centro:'IMEBCO Santo Domingo Xenacoj', cantidad:508 }, is2:{ centro:'INEB Santo Domingo Xenacoj', cantidad:147 }, isj:{ centro:'INEB San Juan de Dios', cantidad:194 }, ibe:{ centro:'INEB Brenda Elizabeth Del Cid Medrano', cantidad:346 }, is3:{ centro:'Instituto Nacional de Educacion Basica de San Antonio Sacatepéquez San Marcos', cantidad:131 }, is4:{ centro:'INBATEL Corral Grande.', cantidad:96 }, ns:{ centro:'NUFED Nucleo Familiar Educativo Para El Desarrollo 312 Serchil', cantidad:39 }, ibg:{ centro:'INBATEL Barranca Grande el Calvario.', cantidad:105 }
+      };
+      try{
+        var out = await sb.from('centros_meta').select('centro,cantidad,prefijo');
+        var merged = Object.assign({}, fallback);
+        (out.data||[]).forEach(function(r){ var pref=(r.prefijo||'').toLowerCase(); if(pref){ merged[pref] = { centro:r.centro, cantidad:r.cantidad||0 }; } });
+        return merged;
+      }catch(e){ return fallback; }
+    }
 
     function currentMonday(){
-      const now = new Date();
-      const day = now.getDay();
-      const diff = (day===0? -6 : 1-day);
-      const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate()+diff);
+      var now = new Date(); var day = now.getDay(); var diff = (day===0? -6 : 1-day);
+      var mon = new Date(now.getFullYear(), now.getMonth(), now.getDate()+diff);
       return mon.toISOString().slice(0,10);
     }
 
@@ -424,4 +622,3 @@
   </script>
 </body>
 </html>
-
